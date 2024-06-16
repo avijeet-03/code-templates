@@ -1,1 +1,1 @@
-# code-templates
+# code-templates for frequently used algorithms
