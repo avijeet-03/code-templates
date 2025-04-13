@@ -1,61 +1,75 @@
+class SlidingMedian {
+	multiset<int> low, high;
+	int firstHalfSum, secondHalfSum;
 
-struct slidingMedian {
-	multiset<int> a, b;
+	void balance() {
+		// adjust the sizes
+		// while left half is greater than right half
+		while (low.size() > high.size() + 1) {
+			// take max of left and insert it in right half
+			int leftMax = *low.rbegin();
+			low.erase(low.find(leftMax));
+			firstHalfSum -= leftMax;
 
-	slidingMedian() {
-		a.clear();
-		b.clear();
+			high.insert(leftMax);
+			secondHalfSum += leftMax;
+		}
+		// while right half is greater than left half
+		while (low.size() < high.size()) {
+			// take right min and insert it in left half
+			int rightMin = *high.begin();
+			high.erase(high.begin());
+			secondHalfSum -= rightMin;
+
+			low.insert(rightMin);
+			firstHalfSum += rightMin;
+		}
 	}
 
-	void relax() {
-		if (b.size() > a.size()) {
-			a.insert(*b.begin());
-			b.erase(b.begin());
-		}
-		if ((int)b.size() + 2 == (int)a.size()) {
-			int x = *a.rbegin();
-			b.insert(x);
-			a.erase(a.find(x));
-		}
-		if (a.empty() or b.empty())
-			return;
-		if (*b.begin() >= *a.rbegin())
-			return;
-
-
-		int x = *a.rbegin();
-		a.erase(a.find(x));
-		int y = *b.begin();
-		b.erase(b.find(y));
-
-		a.insert(y);
-		b.insert(x);
+public:
+	SlidingMedian() {
+		low.clear();
+		high.clear();
+		firstHalfSum = secondHalfSum = 0;
 	}
 
 	void insert(int x) {
-		if (a.size() == b.size())
-			a.insert(x);
-		else
-			b.insert(x);
-
-		relax();
+		if (low.empty() || x <= *low.rbegin()) {
+			low.insert(x);
+			firstHalfSum += x;
+		}
+		else {
+			high.insert(x);
+			secondHalfSum += x;
+		}
+		balance();
 	}
 
 	void remove(int x) {
-		auto it = a.find(x);
-		if (it != a.end())
-			a.erase(it);
-		else {
-			it = b.find(x);
-			if (it != b.end())
-				b.erase(it);
+		if (low.find(x) != low.end()) {
+			low.erase(low.find(x));
+			firstHalfSum -= x;
 		}
-		relax();
+		else if (high.find(x) != high.end()) {
+			high.erase(high.find(x));
+			secondHalfSum -= x;
+		}
+		balance();
 	}
 
-	int median() {
-		if (a.empty())
+	int getMedian() {
+		if (low.empty())
 			return -1;
-		return *a.rbegin();
+		return *low.rbegin();
+	}
+
+	int getCost() {
+		int mid = getMedian();
+		int l = low.size();
+		int r = high.size();
+
+		return (l * mid - firstHalfSum) + (secondHalfSum - r * mid);
 	}
 };
+
+// Task: https://cses.fi/problemset/task/1077
