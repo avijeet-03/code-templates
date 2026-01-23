@@ -1,94 +1,93 @@
+class Node {
+public:
 
-struct Node {
+	Node() {
 
+	}
 };
 
-struct SegmentTree {
-	int len;
-	vector<Node> values;
+class SegmentTree {
+	vector<int> a;
+	vector<Node> tree;
+	int n;
 
-	// +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-	Node single(int val) {
-		// value at the base level while updating
-		return {};
+	// tree nodes are 1 based indexing
+	// array nodes are 0 based indexing
+	// l and r are both inclusive and 0 indexed
+
+	// +++++++++++++++ Change here +++++++++++++++++
+	Node neutral() {
+		return Node();
 	}
 
-	Node neutral = {}; // the value which will not affect our answer
-
-	Node merge(Node a, Node b) {
-		// the associative operation we are doing
-		// a is left subsegment, b is right subsegment
-		return {};
-	}
-	// +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-	SegmentTree(int n) {
-		len = 1;
-		while (len < n) len *= 2;
-		values = vector<Node> (2 * len);
+	Node leafNode(int val) {
+		return Node();
 	}
 
-	void build(vector<int> &a, int x, int lx, int rx) {
-		// leaf node
-		if (rx - lx == 1) {
-			// if lx is within the original array
-			if (lx < (int)a.size())
-				values[x] = single(a[lx]);
+	Node merge(Node &x, Node &y) {
+
+	}
+	// +++++++++++++++ Change here +++++++++++++++++
+
+	void build(int node, int start, int end) {
+		if (start == end) {
+			tree[node] = leafNode(a[start]);
 			return;
 		}
 
-		int mid = (lx + rx) / 2;
-		build(a, 2 * x + 1, lx, mid);
-		build(a, 2 * x + 2, mid, rx);
+		int mid = (start + end) / 2;
+		// build the left subtree [start..mid]
+		build(2 * node, start, mid);
+		// build the right subtree [mid + 1.....end]
+		build(2 * node + 1, mid + 1, end);
 
-		values[x] = merge(values[2 * x + 1], values[2 * x + 2]);
+		tree[node] = merge(tree[2 * node], tree[2 * node + 1]);
 	}
 
+	void update(int node, int start, int end, int ind, int val) {
+		// if leaf node update the tree node
+		if (start == end) {
+			tree[node] = leafNode(val);
+			return;
+		}
+
+		int mid = (start + end) / 2;
+		if (ind <= mid)
+			update(2 * node, start, mid, ind, val);
+		else
+			update(2 * node + 1, mid + 1, end, ind, val);
+
+		tree[node] = merge(tree[2 * node], tree[2 * node + 1]);
+	}
+
+	Node query(int node, int start, int end, int lq, int rq) {
+		// if the nodes contains all the info
+		if (start >= lq && end <= rq)
+			return tree[node];
+		// if node completely lie out of the range
+		if (end < lq || start > rq)
+			return neutral();
+
+		int mid = (start + end) / 2;
+		Node left_tree = query(2 * node, start, mid, lq, rq);
+		Node right_tree = query(2 * node + 1, mid + 1, end, lq, rq);
+
+		return merge(left_tree, right_tree);
+	}
+
+public:
 	void build(vector<int> &a) {
-		build(a, 0, 0, len);
-	}
-
-	void update(int ind, int val, int x, int lx, int rx) {
-		// x is current node, lx and rx are borders of curr node
-		if (rx - lx == 1) { // leaf node
-			// bottom level of the segtree
-			values[x] = single(val);
-			return;
-		}
-
-		int mid = (lx + rx) / 2;
-
-		if (ind < mid) {
-			// go to left subtree
-			update(ind, val, 2 * x + 1, lx, mid);
-		} else {
-			// go to right subtree
-			update(ind, val, 2 * x + 2, mid, rx);
-		}
-		values[x] = merge(values[2 * x + 1], values[2 * x + 2]);
+		this->n = a.size();
+		this->a = a;
+		tree = vector<Node> (4 * n);
+		build(1, 0, n - 1);
 	}
 
 	void update(int ind, int val) {
-		update(ind, val, 0, 0, len);
+		update(1, 0, n - 1, ind, val);
 	}
 
-	Node calc(int l, int r, int x, int lx, int rx) {
-		// current range do not intersect with required range
-		if (r <= lx or l >= rx)
-			return neutral;
-		// whole segment lie in this range
-		if (l <= lx and r >= rx)
-			return values[x];
-
-		int mid = (lx + rx) / 2;
-
-		Node leftVal = calc(l, r, 2 * x + 1, lx, mid);
-		Node rightVal = calc(l, r, 2 * x + 2, mid, rx);
-
-		return merge(leftVal, rightVal);
-	}
-
-	Node calc(int l, int r) {
-		return calc(l, r, 0, 0, len);
+	int query(int l, int r) {
+		// return the exact ans that is needed
 	}
 };
